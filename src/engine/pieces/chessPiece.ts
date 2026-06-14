@@ -1,5 +1,5 @@
-import type { Board } from './board';
-import { Color, PieceType, Position } from './types';
+import type { Board } from '../board';
+import { Color, PieceType, Position } from '../types';
 
 export abstract class ChessPiece {
   constructor(

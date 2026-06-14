@@ -1,5 +1,5 @@
-import type { Board } from './board';
-import { Color, PieceType, Position } from './types';
+import type { Board } from '../board';
+import { Color, PieceType, Position } from '../types';
 import { SlidingPiece } from './slidingPiece';
 
 const QUEEN_DIRECTIONS: ReadonlyArray<[number, number]> = [

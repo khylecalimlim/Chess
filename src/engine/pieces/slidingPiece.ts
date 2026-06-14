@@ -1,7 +1,7 @@
-import type { Board } from './board';
+import type { Board } from '../board';
 import { ChessPiece } from './chessPiece';
-import { Position } from './types';
-import { isOnBoard } from './utils';
+import { Position } from '../types';
+import { isOnBoard } from '../utils';
 
 /** Base class for pieces that move in straight lines until blocked: rook, bishop, queen. */
 export abstract class SlidingPiece extends ChessPiece {
