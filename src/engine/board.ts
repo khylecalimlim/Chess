@@ -2,14 +2,14 @@ import { Bishop } from './pieces/bishop';
 import { ChessPiece } from './pieces/chessPiece';
 import { King } from './pieces/king';
 import { Knight } from './pieces/knight';
+import { Pawn } from './pieces/pawn';
 import { Queen } from './pieces/queen';
+import { Rook } from './pieces/rook';
 import { Color, Position } from './types';
 
 type PieceConstructor = new (color: Color, position: Position) => ChessPiece;
 
-// TODO: back rank should be Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook
-// once Rook is implemented - the two Rook slots are left empty (null) for now.
-const BACK_RANK_ORDER: (PieceConstructor | null)[] = [null, Knight, Bishop, Queen, King, Bishop, Knight, null];
+const BACK_RANK_ORDER: PieceConstructor[] = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook];
 
 export class Board {
   private grid: (ChessPiece | null)[][];
@@ -21,13 +21,12 @@ export class Board {
 
   private setupStartingPosition(): void {
     for (let file = 0; file < 8; file++) {
-      // TODO: place Pawns on rank 1 (white) and rank 6 (black) once Pawn is implemented
+      this.setPiece({ file, rank: 1 }, new Pawn(Color.White, { file, rank: 1 }));
+      this.setPiece({ file, rank: 6 }, new Pawn(Color.Black, { file, rank: 6 }));
 
       const PieceClass = BACK_RANK_ORDER[file];
-      if (PieceClass) {
-        this.setPiece({ file, rank: 0 }, new PieceClass(Color.White, { file, rank: 0 }));
-        this.setPiece({ file, rank: 7 }, new PieceClass(Color.Black, { file, rank: 7 }));
-      }
+      this.setPiece({ file, rank: 0 }, new PieceClass(Color.White, { file, rank: 0 }));
+      this.setPiece({ file, rank: 7 }, new PieceClass(Color.Black, { file, rank: 7 }));
     }
   }
 
