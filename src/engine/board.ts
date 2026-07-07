@@ -5,7 +5,7 @@ import { Knight } from './pieces/knight';
 import { Pawn } from './pieces/pawn';
 import { Queen } from './pieces/queen';
 import { Rook } from './pieces/rook';
-import { Color, Position } from './types';
+import { Color, PieceType, Position } from './types';
 
 type PieceConstructor = new (color: Color, position: Position) => ChessPiece;
 
@@ -14,9 +14,10 @@ const BACK_RANK_ORDER: PieceConstructor[] = [Rook, Knight, Bishop, Queen, King, 
 export class Board {
   private grid: (ChessPiece | null)[][];
 
-  constructor() {
+  /** Pass `skipSetup` to get an empty board (used by tests and by `clone`). */
+  constructor(skipSetup = false) {
     this.grid = Array.from({ length: 8 }, () => Array<ChessPiece | null>(8).fill(null));
-    this.setupStartingPosition();
+    if (!skipSetup) this.setupStartingPosition();
   }
 
   private setupStartingPosition(): void {
@@ -43,5 +44,38 @@ export class Board {
     const piece = this.getPiece(from);
     this.setPiece(from, null);
     this.setPiece(to, piece);
+  }
+
+  getAllPieces(color?: Color): ChessPiece[] {
+    const pieces: ChessPiece[] = [];
+    for (const row of this.grid) {
+      for (const piece of row) {
+        if (piece && (!color || piece.color === color)) pieces.push(piece);
+      }
+    }
+    return pieces;
+  }
+
+  findKing(color: Color): King {
+    const king = this.getAllPieces(color).find((piece) => piece.type === PieceType.King);
+    if (!king) throw new Error(`No ${color} king on the board`);
+    return king as King;
+  }
+
+  /** Deep copy — cloned pieces are new instances, so mutating the clone never affects the original. */
+  clone(): Board {
+    const copy = new Board(true);
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        const piece = this.grid[rank][file];
+        copy.grid[rank][file] = piece ? this.clonePiece(piece) : null;
+      }
+    }
+    return copy;
+  }
+
+  private clonePiece(piece: ChessPiece): ChessPiece {
+    const Ctor = piece.constructor as PieceConstructor;
+    return new Ctor(piece.color, { ...piece.position });
   }
 }
