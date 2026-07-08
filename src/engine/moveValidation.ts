@@ -3,6 +3,12 @@ import { ChessPiece } from './pieces/chessPiece';
 import { Color, Position } from './types';
 import { oppositeColor } from './utils';
 
+export enum GameStatus {
+  Ongoing = 'ongoing',
+  Checkmate = 'checkmate',
+  Stalemate = 'stalemate',
+}
+
 /** True if `color`'s king is currently attacked by any enemy piece. */
 export function isInCheck(board: Board, color: Color): boolean {
   const king = board.findKing(color);
@@ -23,4 +29,12 @@ export function getLegalMoves(board: Board, piece: ChessPiece): Position[] {
     simulation.movePiece(piece.position, move);
     return !isInCheck(simulation, piece.color);
   });
+}
+
+/** Checkmate/stalemate for the side to move: no legal moves, with or without check. */
+export function getGameStatus(board: Board, color: Color): GameStatus {
+  const hasLegalMove = board.getAllPieces(color).some((piece) => getLegalMoves(board, piece).length > 0);
+  if (hasLegalMove) return GameStatus.Ongoing;
+
+  return isInCheck(board, color) ? GameStatus.Checkmate : GameStatus.Stalemate;
 }
