@@ -6,7 +6,7 @@ import { Knight } from '../engine/pieces/knight';
 import { Pawn } from '../engine/pieces/pawn';
 import { Queen } from '../engine/pieces/queen';
 import { Rook } from '../engine/pieces/rook';
-import { Color } from '../engine/types';
+import { Color, PieceType } from '../engine/types';
 
 describe('isInCheck', () => {
   it('is false for both colors in the starting position', () => {
@@ -88,5 +88,78 @@ describe('getGameStatus', () => {
 
     expect(isInCheck(board, Color.White)).toBe(false);
     expect(getGameStatus(board, Color.White)).toBe(GameStatus.Stalemate);
+  });
+});
+
+describe('castling', () => {
+  function setupCastlingBoard(): { board: Board; king: King } {
+    const board = new Board(true);
+    const king = new King(Color.White, { file: 4, rank: 0 });
+    board.setPiece(king.position, king);
+    board.setPiece({ file: 0, rank: 0 }, new Rook(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 0 }, new Rook(Color.White, { file: 7, rank: 0 }));
+    return { board, king };
+  }
+
+  it('allows both kingside and queenside castling when nothing has moved and the path is clear', () => {
+    const { board, king } = setupCastlingBoard();
+
+    const moves = getLegalMoves(board, king);
+    expect(moves).toContainEqual({ file: 6, rank: 0 });
+    expect(moves).toContainEqual({ file: 2, rank: 0 });
+  });
+
+  it('is blocked when a piece stands between king and rook', () => {
+    const { board, king } = setupCastlingBoard();
+    board.setPiece({ file: 5, rank: 0 }, new Knight(Color.White, { file: 5, rank: 0 }));
+
+    const moves = getLegalMoves(board, king);
+    expect(moves).not.toContainEqual({ file: 6, rank: 0 });
+    expect(moves).toContainEqual({ file: 2, rank: 0 });
+  });
+
+  it('is blocked once the king has already moved', () => {
+    const { board, king } = setupCastlingBoard();
+    king.hasMoved = true;
+
+    const moves = getLegalMoves(board, king);
+    expect(moves).not.toContainEqual({ file: 6, rank: 0 });
+    expect(moves).not.toContainEqual({ file: 2, rank: 0 });
+  });
+
+  it('is blocked once the relevant rook has already moved', () => {
+    const { board, king } = setupCastlingBoard();
+    (board.getPiece({ file: 7, rank: 0 }) as Rook).hasMoved = true;
+
+    const moves = getLegalMoves(board, king);
+    expect(moves).not.toContainEqual({ file: 6, rank: 0 });
+    expect(moves).toContainEqual({ file: 2, rank: 0 });
+  });
+
+  it('is blocked while the king is in check', () => {
+    const { board, king } = setupCastlingBoard();
+    board.setPiece({ file: 4, rank: 7 }, new Rook(Color.Black, { file: 4, rank: 7 }));
+
+    expect(getLegalMoves(board, king)).not.toContainEqual({ file: 6, rank: 0 });
+  });
+
+  it('is blocked when the king would pass through an attacked square', () => {
+    const { board, king } = setupCastlingBoard();
+    // Black rook attacks f1 (file 5) — a square the king must cross en route to g1.
+    board.setPiece({ file: 5, rank: 7 }, new Rook(Color.Black, { file: 5, rank: 7 }));
+
+    const moves = getLegalMoves(board, king);
+    expect(moves).not.toContainEqual({ file: 6, rank: 0 });
+    expect(moves).toContainEqual({ file: 2, rank: 0 });
+  });
+
+  it('moves the rook alongside the king when the castling move is executed', () => {
+    const { board, king } = setupCastlingBoard();
+
+    board.movePiece(king.position, { file: 6, rank: 0 });
+
+    expect(board.getPiece({ file: 6, rank: 0 })).toBe(king);
+    expect(board.getPiece({ file: 5, rank: 0 })?.type).toBe(PieceType.Rook);
+    expect(board.getPiece({ file: 7, rank: 0 })).toBeNull();
   });
 });

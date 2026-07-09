@@ -40,10 +40,20 @@ export class Board {
     if (piece) piece.position = position;
   }
 
+  /** Handles castling as a side effect: a king moving two files also relocates its rook. */
   movePiece(from: Position, to: Position): void {
     const piece = this.getPiece(from);
     this.setPiece(from, null);
     this.setPiece(to, piece);
+    if (!piece) return;
+    piece.hasMoved = true;
+
+    if (piece.type === PieceType.King && Math.abs(to.file - from.file) === 2) {
+      const direction = to.file > from.file ? 1 : -1;
+      const rookFrom: Position = { file: direction === 1 ? 7 : 0, rank: from.rank };
+      const rookTo: Position = { file: to.file - direction, rank: from.rank };
+      this.movePiece(rookFrom, rookTo);
+    }
   }
 
   getAllPieces(color?: Color): ChessPiece[] {
@@ -76,6 +86,8 @@ export class Board {
 
   private clonePiece(piece: ChessPiece): ChessPiece {
     const Ctor = piece.constructor as PieceConstructor;
-    return new Ctor(piece.color, { ...piece.position });
+    const copy = new Ctor(piece.color, { ...piece.position });
+    copy.hasMoved = piece.hasMoved;
+    return copy;
   }
 }

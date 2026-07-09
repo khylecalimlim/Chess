@@ -13,7 +13,10 @@ export class King extends ChessPiece {
     super(PieceType.King, color, position);
   }
 
-  // TODO: castling
+  // Castling isn't generated here: unlike every other move, it depends on
+  // check state (can't castle out of, through, or into check), which this
+  // method deliberately ignores (see ChessPiece.getMoves). It's added on top
+  // in moveValidation.ts's getLegalMoves instead.
   getMoves(board: Board): Position[] {
     const moves: Position[] = [];
 

@@ -1,6 +1,7 @@
 import { Board } from './board';
 import { ChessPiece } from './pieces/chessPiece';
-import { Color, Position } from './types';
+import { King } from './pieces/king';
+import { Color, PieceType, Position } from './types';
 import { oppositeColor } from './utils';
 
 export enum GameStatus {
@@ -9,14 +10,52 @@ export enum GameStatus {
   Stalemate = 'stalemate',
 }
 
-/** True if `color`'s king is currently attacked by any enemy piece. */
-export function isInCheck(board: Board, color: Color): boolean {
-  const king = board.findKing(color);
-  const enemyColor = oppositeColor(color);
+/** True if `square` is currently attacked by any of `attackedColor`'s enemies. */
+function isSquareAttacked(board: Board, square: Position, attackedColor: Color): boolean {
+  const enemyColor = oppositeColor(attackedColor);
 
   return board.getAllPieces(enemyColor).some((piece) =>
-    piece.getMoves(board).some((move) => move.file === king.position.file && move.rank === king.position.rank),
+    piece.getMoves(board).some((move) => move.file === square.file && move.rank === square.rank),
   );
+}
+
+/** True if `color`'s king is currently attacked by any enemy piece. */
+export function isInCheck(board: Board, color: Color): boolean {
+  return isSquareAttacked(board, board.findKing(color).position, color);
+}
+
+const CASTLE_SIDES: ReadonlyArray<{ rookFile: number; direction: 1 | -1 }> = [
+  { rookFile: 7, direction: 1 }, // kingside
+  { rookFile: 0, direction: -1 }, // queenside
+];
+
+/**
+ * Castling moves for `king`: neither king nor rook has moved, the squares
+ * between them are empty, and the king isn't currently in, doesn't pass
+ * through, and doesn't land in check. All of that is check-dependent, which
+ * is why it lives here instead of in King.getMoves (see that method's note).
+ */
+function getCastlingMoves(board: Board, king: King): Position[] {
+  if (king.hasMoved || isInCheck(board, king.color)) return [];
+
+  const { file, rank } = king.position;
+  const moves: Position[] = [];
+
+  for (const { rookFile, direction } of CASTLE_SIDES) {
+    const rook = board.getPiece({ file: rookFile, rank });
+    if (!rook || rook.type !== PieceType.Rook || rook.color !== king.color || rook.hasMoved) continue;
+
+    const between: number[] = [];
+    for (let f = Math.min(file, rookFile) + 1; f < Math.max(file, rookFile); f++) between.push(f);
+    if (!between.every((f) => !board.getPiece({ file: f, rank }))) continue;
+
+    const kingPath = [file + direction, file + 2 * direction];
+    if (!kingPath.every((f) => !isSquareAttacked(board, { file: f, rank }, king.color))) continue;
+
+    moves.push({ file: file + 2 * direction, rank });
+  }
+
+  return moves;
 }
 
 /**
@@ -24,7 +63,10 @@ export function isInCheck(board: Board, color: Color): boolean {
  * leave the mover's own king in check, by simulating each one on a cloned board.
  */
 export function getLegalMoves(board: Board, piece: ChessPiece): Position[] {
-  return piece.getMoves(board).filter((move) => {
+  const candidates = piece.getMoves(board);
+  if (piece.type === PieceType.King) candidates.push(...getCastlingMoves(board, piece as King));
+
+  return candidates.filter((move) => {
     const simulation = board.clone();
     simulation.movePiece(piece.position, move);
     return !isInCheck(simulation, piece.color);

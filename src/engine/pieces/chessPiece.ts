@@ -2,6 +2,9 @@ import type { Board } from '../board';
 import { Color, PieceType, Position } from '../types';
 
 export abstract class ChessPiece {
+  /** Tracked for castling eligibility (king/rook must not have moved yet). */
+  hasMoved = false;
+
   constructor(
     public readonly type: PieceType,
     public readonly color: Color,
