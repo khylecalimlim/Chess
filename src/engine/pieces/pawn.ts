@@ -18,7 +18,6 @@ export class Pawn extends ChessPiece {
     super(PieceType.Pawn, color, position);
   }
 
-  // TODO: promotion (needs move execution/game state, not yet built)
   getMoves(board: Board): Position[] {
     const moves: Position[] = [];
     const dir = FORWARD[this.color];

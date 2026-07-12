@@ -33,10 +33,10 @@ A step-by-step plan for building a chess game with pieces/board/rules logic, a w
   - [ ] Bishop
   - [ ] Rook
   - [ ] Queen
-  - [ ] King (including castling)
+  - [x] King (including castling)
 - [x] Implement check detection (is the king under attack?)
 - [x] Filter moves that would leave own king in check
-- [ ] Implement special rules: castling, en passant, pawn promotion
+- [x] Implement special rules: castling, en passant, pawn promotion
 - [ ] Implement game-end conditions: checkmate, stalemate, draw (50-move rule, threefold repetition, insufficient material)
 
 ## Step 4: Game State Management

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Board } from '../engine/board';
 import { Pawn } from '../engine/pieces/pawn';
 import { Rook } from '../engine/pieces/rook';
-import { Color } from '../engine/types';
+import { Color, PieceType } from '../engine/types';
 
 describe('Pawn', () => {
   it('can move one or two squares forward from its starting rank', () => {
@@ -84,6 +84,29 @@ describe('Pawn', () => {
 
     expect(board.getPiece({ file: 5, rank: 5 })).toBe(pawn);
     expect(board.getPiece({ file: 5, rank: 4 })).toBeNull();
+  });
+
+  it('promotes to a queen on reaching the far rank', () => {
+    const board = new Board(true);
+    const pawn = new Pawn(Color.White, { file: 0, rank: 6 });
+    board.setPiece(pawn.position, pawn);
+
+    board.movePiece(pawn.position, { file: 0, rank: 7 });
+
+    const promoted = board.getPiece({ file: 0, rank: 7 });
+    expect(promoted).not.toBe(pawn);
+    expect(promoted?.type).toBe(PieceType.Queen);
+    expect(promoted?.color).toBe(Color.White);
+  });
+
+  it('does not promote a pawn short of the far rank', () => {
+    const board = new Board(true);
+    const pawn = new Pawn(Color.Black, { file: 0, rank: 2 });
+    board.setPiece(pawn.position, pawn);
+
+    board.movePiece(pawn.position, { file: 0, rank: 1 });
+
+    expect(board.getPiece({ file: 0, rank: 1 })?.type).toBe(PieceType.Pawn);
   });
 });
 

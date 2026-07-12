@@ -11,6 +11,12 @@ type PieceConstructor = new (color: Color, position: Position) => ChessPiece;
 
 const BACK_RANK_ORDER: PieceConstructor[] = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook];
 
+/** The far rank each color's pawns promote on. */
+const PROMOTION_RANK: Record<Color, number> = {
+  [Color.White]: 7,
+  [Color.Black]: 0,
+};
+
 export class Board {
   private grid: (ChessPiece | null)[][];
 
@@ -45,10 +51,12 @@ export class Board {
   }
 
   /**
-   * Handles castling and en passant as side effects: a king moving two files
-   * also relocates its rook, and a pawn landing on the current en passant
-   * target square also removes the pawn it's capturing (which isn't on the
-   * destination square, but beside its origin square).
+   * Handles castling, en passant, and promotion as side effects: a king moving
+   * two files also relocates its rook, a pawn landing on the current en
+   * passant target square also removes the pawn it's capturing (which isn't
+   * on the destination square, but beside its origin square), and a pawn
+   * reaching the far rank is replaced with a Queen. (Auto-queening for now —
+   * choosing the promotion piece is a Step 6 UI concern, not an engine one.)
    */
   movePiece(from: Position, to: Position): void {
     const piece = this.getPiece(from);
@@ -65,6 +73,10 @@ export class Board {
     piece.hasMoved = true;
 
     if (isEnPassantCapture) this.setPiece({ file: to.file, rank: from.rank }, null);
+
+    if (piece.type === PieceType.Pawn && to.rank === PROMOTION_RANK[piece.color]) {
+      this.setPiece(to, new Queen(piece.color, to));
+    }
 
     if (piece.type === PieceType.King && Math.abs(to.file - from.file) === 2) {
       const direction = to.file > from.file ? 1 : -1;
