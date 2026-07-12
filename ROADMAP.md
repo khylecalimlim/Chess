@@ -28,7 +28,7 @@ A step-by-step plan for building a chess game with pieces/board/rules logic, a w
 
 ## Step 3: Piece Movement Rules
 - [ ] Implement legal move generation per piece type:
-  - [ ] Pawn (including double move, captures, en passant)
+  - [x] Pawn (including double move, captures, en passant)
   - [ ] Knight
   - [ ] Bishop
   - [ ] Rook

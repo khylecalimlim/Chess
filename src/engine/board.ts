@@ -14,6 +14,10 @@ const BACK_RANK_ORDER: PieceConstructor[] = [Rook, Knight, Bishop, Queen, King, 
 export class Board {
   private grid: (ChessPiece | null)[][];
 
+  /** The square a pawn just skipped over via a two-square advance, if any — the
+   *  only square an en passant capture can land on this turn. Reset every move. */
+  enPassantTarget: Position | null = null;
+
   /** Pass `skipSetup` to get an empty board (used by tests and by `clone`). */
   constructor(skipSetup = false) {
     this.grid = Array.from({ length: 8 }, () => Array<ChessPiece | null>(8).fill(null));
@@ -40,13 +44,27 @@ export class Board {
     if (piece) piece.position = position;
   }
 
-  /** Handles castling as a side effect: a king moving two files also relocates its rook. */
+  /**
+   * Handles castling and en passant as side effects: a king moving two files
+   * also relocates its rook, and a pawn landing on the current en passant
+   * target square also removes the pawn it's capturing (which isn't on the
+   * destination square, but beside its origin square).
+   */
   movePiece(from: Position, to: Position): void {
     const piece = this.getPiece(from);
+    const isEnPassantCapture =
+      piece?.type === PieceType.Pawn &&
+      from.file !== to.file &&
+      !this.getPiece(to) &&
+      this.enPassantTarget?.file === to.file &&
+      this.enPassantTarget?.rank === to.rank;
+
     this.setPiece(from, null);
     this.setPiece(to, piece);
     if (!piece) return;
     piece.hasMoved = true;
+
+    if (isEnPassantCapture) this.setPiece({ file: to.file, rank: from.rank }, null);
 
     if (piece.type === PieceType.King && Math.abs(to.file - from.file) === 2) {
       const direction = to.file > from.file ? 1 : -1;
@@ -54,6 +72,11 @@ export class Board {
       const rookTo: Position = { file: to.file - direction, rank: from.rank };
       this.movePiece(rookFrom, rookTo);
     }
+
+    this.enPassantTarget =
+      piece.type === PieceType.Pawn && Math.abs(to.rank - from.rank) === 2
+        ? { file: from.file, rank: (from.rank + to.rank) / 2 }
+        : null;
   }
 
   getAllPieces(color?: Color): ChessPiece[] {
@@ -81,6 +104,7 @@ export class Board {
         copy.grid[rank][file] = piece ? this.clonePiece(piece) : null;
       }
     }
+    copy.enPassantTarget = this.enPassantTarget ? { ...this.enPassantTarget } : null;
     return copy;
   }
 

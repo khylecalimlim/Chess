@@ -48,6 +48,43 @@ describe('Pawn', () => {
     );
     expect(moves).not.toEqual(expect.arrayContaining([{ file: 3, rank: 5 }]));
   });
+
+  it('can capture en passant right after an enemy pawn double-steps beside it', () => {
+    const board = new Board(true);
+    const pawn = new Pawn(Color.White, { file: 4, rank: 4 });
+    board.setPiece(pawn.position, pawn);
+    board.setPiece({ file: 5, rank: 6 }, new Pawn(Color.Black, { file: 5, rank: 6 }));
+
+    board.movePiece({ file: 5, rank: 6 }, { file: 5, rank: 4 });
+
+    expect(pawn.getMoves(board)).toContainEqual({ file: 5, rank: 5 });
+  });
+
+  it('cannot capture en passant once a move has passed', () => {
+    const board = new Board(true);
+    const pawn = new Pawn(Color.White, { file: 4, rank: 4 });
+    board.setPiece(pawn.position, pawn);
+    board.setPiece({ file: 5, rank: 6 }, new Pawn(Color.Black, { file: 5, rank: 6 }));
+    board.setPiece({ file: 0, rank: 6 }, new Pawn(Color.Black, { file: 0, rank: 6 }));
+
+    board.movePiece({ file: 5, rank: 6 }, { file: 5, rank: 4 });
+    board.movePiece({ file: 0, rank: 6 }, { file: 0, rank: 5 }); // unrelated move clears the window
+
+    expect(pawn.getMoves(board)).not.toContainEqual({ file: 5, rank: 5 });
+  });
+
+  it('removes the captured pawn when an en passant capture is executed', () => {
+    const board = new Board(true);
+    const pawn = new Pawn(Color.White, { file: 4, rank: 4 });
+    board.setPiece(pawn.position, pawn);
+    board.setPiece({ file: 5, rank: 6 }, new Pawn(Color.Black, { file: 5, rank: 6 }));
+    board.movePiece({ file: 5, rank: 6 }, { file: 5, rank: 4 });
+
+    board.movePiece(pawn.position, { file: 5, rank: 5 });
+
+    expect(board.getPiece({ file: 5, rank: 5 })).toBe(pawn);
+    expect(board.getPiece({ file: 5, rank: 4 })).toBeNull();
+  });
 });
 
 describe('Rook', () => {

@@ -18,7 +18,7 @@ export class Pawn extends ChessPiece {
     super(PieceType.Pawn, color, position);
   }
 
-  // TODO: en passant, promotion (needs move execution/game state, not yet built)
+  // TODO: promotion (needs move execution/game state, not yet built)
   getMoves(board: Board): Position[] {
     const moves: Position[] = [];
     const dir = FORWARD[this.color];
@@ -39,6 +39,8 @@ export class Pawn extends ChessPiece {
 
       const occupant = board.getPiece(target);
       if (occupant && occupant.color !== this.color) {
+        moves.push(target);
+      } else if (!occupant && board.enPassantTarget?.file === target.file && board.enPassantTarget?.rank === target.rank) {
         moves.push(target);
       }
     }
