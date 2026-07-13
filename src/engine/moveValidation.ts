@@ -8,6 +8,7 @@ export enum GameStatus {
   Ongoing = 'ongoing',
   Checkmate = 'checkmate',
   Stalemate = 'stalemate',
+  Draw = 'draw',
 }
 
 /** True if `square` is currently attacked by any of `attackedColor`'s enemies. */
@@ -73,8 +74,36 @@ export function getLegalMoves(board: Board, piece: ChessPiece): Position[] {
   });
 }
 
+function squareColor(position: Position): 'light' | 'dark' {
+  return (position.file + position.rank) % 2 === 0 ? 'dark' : 'light';
+}
+
+/**
+ * True if neither side has enough material left to ever force checkmate:
+ * bare kings, king + one minor piece vs. bare king, or king + bishop vs.
+ * king + bishop where both bishops sit on the same-colored squares (so they
+ * can never contest each other). Any pawn, rook, or queen on the board — or
+ * two knights, which retain a helpmate-only chance — means this is false.
+ */
+export function isInsufficientMaterial(board: Board): boolean {
+  const nonKings = board.getAllPieces().filter((piece) => piece.type !== PieceType.King);
+
+  if (nonKings.length === 0) return true;
+  if (nonKings.length === 1) {
+    return nonKings[0].type === PieceType.Bishop || nonKings[0].type === PieceType.Knight;
+  }
+  if (nonKings.length === 2 && nonKings.every((piece) => piece.type === PieceType.Bishop)) {
+    const [first, second] = nonKings;
+    return first.color !== second.color && squareColor(first.position) === squareColor(second.position);
+  }
+
+  return false;
+}
+
 /** Checkmate/stalemate for the side to move: no legal moves, with or without check. */
 export function getGameStatus(board: Board, color: Color): GameStatus {
+  if (isInsufficientMaterial(board)) return GameStatus.Draw;
+
   const hasLegalMove = board.getAllPieces(color).some((piece) => getLegalMoves(board, piece).length > 0);
   if (hasLegalMove) return GameStatus.Ongoing;
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Board } from '../engine/board';
-import { GameStatus, getGameStatus, getLegalMoves, isInCheck } from '../engine/moveValidation';
+import { GameStatus, getGameStatus, getLegalMoves, isInCheck, isInsufficientMaterial } from '../engine/moveValidation';
+import { Bishop } from '../engine/pieces/bishop';
 import { King } from '../engine/pieces/king';
 import { Knight } from '../engine/pieces/knight';
 import { Pawn } from '../engine/pieces/pawn';
@@ -88,6 +89,72 @@ describe('getGameStatus', () => {
 
     expect(isInCheck(board, Color.White)).toBe(false);
     expect(getGameStatus(board, Color.White)).toBe(GameStatus.Stalemate);
+  });
+
+  it('detects a draw by insufficient material even though moves remain', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+
+    expect(getGameStatus(board, Color.White)).toBe(GameStatus.Draw);
+  });
+});
+
+describe('isInsufficientMaterial', () => {
+  it('is true for bare kings', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+
+    expect(isInsufficientMaterial(board)).toBe(true);
+  });
+
+  it('is true for king + single minor piece vs. bare king', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+    board.setPiece({ file: 3, rank: 3 }, new Knight(Color.White, { file: 3, rank: 3 }));
+
+    expect(isInsufficientMaterial(board)).toBe(true);
+  });
+
+  it('is true for opposite-colored kings with same-square-color bishops each', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+    board.setPiece({ file: 2, rank: 0 }, new Bishop(Color.White, { file: 2, rank: 0 })); // dark square
+    board.setPiece({ file: 5, rank: 7 }, new Bishop(Color.Black, { file: 5, rank: 7 })); // dark square
+
+    expect(isInsufficientMaterial(board)).toBe(true);
+  });
+
+  it('is false when the bishops sit on opposite-colored squares', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+    board.setPiece({ file: 2, rank: 0 }, new Bishop(Color.White, { file: 2, rank: 0 })); // dark square
+    board.setPiece({ file: 4, rank: 7 }, new Bishop(Color.Black, { file: 4, rank: 7 })); // light square
+
+    expect(isInsufficientMaterial(board)).toBe(false);
+  });
+
+  it('is false with two knights (retains a helpmate-only chance)', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+    board.setPiece({ file: 3, rank: 3 }, new Knight(Color.White, { file: 3, rank: 3 }));
+    board.setPiece({ file: 4, rank: 4 }, new Knight(Color.White, { file: 4, rank: 4 }));
+
+    expect(isInsufficientMaterial(board)).toBe(false);
+  });
+
+  it('is false when any pawn, rook, or queen remains', () => {
+    const board = new Board(true);
+    board.setPiece({ file: 0, rank: 0 }, new King(Color.White, { file: 0, rank: 0 }));
+    board.setPiece({ file: 7, rank: 7 }, new King(Color.Black, { file: 7, rank: 7 }));
+    board.setPiece({ file: 3, rank: 3 }, new Pawn(Color.White, { file: 3, rank: 3 }));
+
+    expect(isInsufficientMaterial(board)).toBe(false);
   });
 });
 
