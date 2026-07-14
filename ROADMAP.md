@@ -41,13 +41,13 @@ A step-by-step plan for building a chess game with pieces/board/rules logic, a w
 
 ## Step 4: Game State Management
 - [ ] Create a `Game`/`GameState` class to track:
-  - [ ] Board state
-  - [ ] Whose turn it is
+  - [x] Board state
+  - [x] Whose turn it is
   - [ ] Move history (for undo, repetition checks, PGN export)
-  - [ ] Captured pieces
-- [ ] Implement move execution (apply a move, update state, switch turns)
+  - [x] Captured pieces
+- [x] Implement move execution (apply a move, update state, switch turns)
 - [ ] Implement move history/undo functionality
-- [ ] Write unit tests for move generation and edge cases (castling, en passant, promotion, check/checkmate scenarios)
+- [x] Write unit tests for move generation and edge cases (castling, en passant, promotion, check/checkmate scenarios)
 
 ## Step 5: UI - Board & Pieces
 - [ ] Build a React component for the chessboard grid (8x8)

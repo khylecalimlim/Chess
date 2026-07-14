@@ -57,8 +57,10 @@ export class Board {
    * on the destination square, but beside its origin square), and a pawn
    * reaching the far rank is replaced with a Queen. (Auto-queening for now —
    * choosing the promotion piece is a Step 6 UI concern, not an engine one.)
+   * Returns whichever piece this move captured, if any — callers that track
+   * captured pieces need this since an en passant capture isn't on `to`.
    */
-  movePiece(from: Position, to: Position): void {
+  movePiece(from: Position, to: Position): ChessPiece | null {
     const piece = this.getPiece(from);
     const isEnPassantCapture =
       piece?.type === PieceType.Pawn &&
@@ -66,10 +68,11 @@ export class Board {
       !this.getPiece(to) &&
       this.enPassantTarget?.file === to.file &&
       this.enPassantTarget?.rank === to.rank;
+    const captured = isEnPassantCapture ? this.getPiece({ file: to.file, rank: from.rank }) : this.getPiece(to);
 
     this.setPiece(from, null);
     this.setPiece(to, piece);
-    if (!piece) return;
+    if (!piece) return null;
     piece.hasMoved = true;
 
     if (isEnPassantCapture) this.setPiece({ file: to.file, rank: from.rank }, null);
@@ -89,6 +92,8 @@ export class Board {
       piece.type === PieceType.Pawn && Math.abs(to.rank - from.rank) === 2
         ? { file: from.file, rank: (from.rank + to.rank) / 2 }
         : null;
+
+    return captured;
   }
 
   getAllPieces(color?: Color): ChessPiece[] {
