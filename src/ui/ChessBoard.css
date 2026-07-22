@@ -47,23 +47,20 @@
   transform: scale(1.08);
 }
 
-/* TODO(easy): piece styling. Pieces are currently plain Unicode glyphs
-   (see PIECE_GLYPHS in ChessBoard.tsx) tinted via `color` + `filter` below —
-   works, but is the simplest possible look. Easy upgrades, roughly in order
-   of effort: (1) just tweak these two color/filter pairs for a different
-   palette (e.g. warm cream vs. walnut instead of stark white/black); (2) swap
-   in a nicer glyph font (a chess-specific webfont, loaded like the Google
-   Fonts already used elsewhere in the project) for cleaner glyph shapes at
-   this font-size; (3) go further and replace the glyphs with SVG/PNG piece
-   sets (many free sets exist, e.g. Wikimedia's Chess Alpha/Merida sets) —
-   biggest visual upgrade, but requires swapping PIECE_GLYPHS for an image-src
-   map and adjusting .piece to render <img>/<svg> instead of text. */
+/* Remaining upgrade path for piece styling, roughly in order of effort:
+   (2) swap in a nicer glyph font (a chess-specific webfont, loaded like the
+   Google Fonts already used elsewhere in the project) for cleaner glyph
+   shapes at this font-size; (3) go further and replace the glyphs with
+   SVG/PNG piece sets (many free sets exist, e.g. Wikimedia's Chess Alpha/
+   Merida sets) — biggest visual upgrade, but requires swapping
+   PIECE_GLYPHS for an image-src map and adjusting .piece to render
+   <img>/<svg> instead of text. */
 .piece-white {
-  color: #fdfdfd;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+  color: #fffaf0;
+  filter: drop-shadow(0 1px 1px rgba(50, 25, 10, 0.6));
 }
 
 .piece-black {
-  color: #111111;
-  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.35));
+  color: #180d06;
+  filter: drop-shadow(0 1px 1px rgba(255, 240, 210, 0.4));
 }
